@@ -1,0 +1,29 @@
+{
+  "name": "fetch-resilient",
+  "version": "1.0.3",
+  "type": "module",
+  "main": "./dist/resilient-http-client.umd.js",
+  "module": "./dist/resilient-http-client.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/resilient-http-client.es.js",
+      "require": "./dist/resilient-http-client.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.2.0",
+    "terser": "^5.19.2",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "vite-plugin-dts": "^3.0.0"
+  }
+}
