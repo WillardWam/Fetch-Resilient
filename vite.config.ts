@@ -18,5 +18,13 @@ export default defineConfig({
     },
     sourcemap: true,
     minify: 'terser',
+    // terserOptions: {
+    //   compress: {
+    //     // This will preserve console logs
+    //     pure_funcs: [],
+    //     drop_debugger: false,
+    //   },
+    //   mangle: true,
+    // },
   },
 })

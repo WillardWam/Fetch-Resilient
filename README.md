@@ -23,11 +23,68 @@ npm install fetch-resilient
 Here's a simple example of how to use Fetch Resilient:
 
 ```typescript
-import { ResilientHttpClient } from 'fetch-resilient';
+import { httpClient } from 'fetch-resilient';
 
-const client = new ResilientHttpClient({
+async function fetchData() {
+  try {
+    const data = await httpClient.fetch<{ message: string }>('https://api.example.com/data', {
+      method: 'GET',
+    });
+    console.log(data.message);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+}
+
+fetchData();
+```
+
+## Global Configuration
+
+You can set up global configuration for all requests using the `updateConfig` method:
+
+```typescript
+import { httpClient } from 'fetch-resilient';
+
+httpClient.updateConfig({
   maxRetries: 3,
   initialBackoff: 1000,
+  maxBackoff: 10000,
+  backoffFactor: 2,
+  retryOnErrors: [500, 502, 503, 504],
+  withCache: true,
+  cacheTTL: 60000, // Cache for 1 minute
+  onRetry: (attempt, url, options) => {
+    console.log(`Retrying request (attempt ${attempt}): ${url}`);
+  },
+  onHttpResponse: (response) => {
+    console.log(`Response status: ${response.status}`);
+  },
+  onSuccess: (data, response) => {
+    console.log('Request successful');
+    return data;
+  },
+  onError: (error, attempt) => {
+    console.error(`Error on attempt ${attempt}:`, error);
+  },
+});
+```
+
+## Using ResilientHttpClient Directly
+
+If you prefer more control, you can use the `ResilientHttpClient` class directly:
+
+```typescript
+import { ResilientHttpClient } from 'fetch-resilient';
+
+const client = ResilientHttpClient.getInstance({
+  maxRetries: 3,
+  initialBackoff: 500,
+  maxBackoff: 10000,
+  backoffFactor: 2,
+  retryOnErrors: [404, 500],
+  withCache: true,
+  cacheTTL: 60000, // Cache for 1 minute
 });
 
 async function fetchData() {
@@ -49,19 +106,19 @@ fetchData();
 Fetch Resilient offers a wide range of configuration options:
 
 ```typescript
-const client = new ResilientHttpClient({
+const client = ResilientHttpClient.getInstance({
   maxRetries: 3,
   initialBackoff: 500,
   maxBackoff: 10000,
   backoffFactor: 2,
   retryOnErrors: [404, 500],
   isTextResponse: false,
+  isJsonResponse: false,
+  responseType: 'auto',
   withCache: true,
   cacheTTL: 60000, // Cache for 1 minute
-  throttle: true,
   throttleTime: 1000,
-  debounce: false,
-  debounceTime: 1000,
+  debounceTime: 0,
   onRetry: (attempt, url, options) => {
     console.log(`Retrying request (attempt ${attempt}): ${url}`);
   },
@@ -83,21 +140,18 @@ const client = new ResilientHttpClient({
 To enable caching, use the `withCache` option:
 
 ```typescript
-const data = await client.fetch<UserData>('https://api.example.com/user/1', {
-  method: 'GET',
-}, {
-  withCache: true,
-  cacheTTL: 60000, // Cache for 1 minute
-});
+const data = await client.fetch<UserData>('https://api.example.com/user/1', 
+  { method: 'GET' },
+  { withCache: true, cacheTTL: 60000 } // Cache for 1 minute
+);
 ```
 
 ## Throttling
 
-To throttle requests, use the `throttle` option:
+To throttle requests, use the `throttleTime` option:
 
 ```typescript
-const client = new ResilientHttpClient({
-  throttle: true,
+const client = ResilientHttpClient.getInstance({
   throttleTime: 5000, // Allow one request every 5 seconds
 });
 
@@ -110,11 +164,10 @@ client.fetch('https://api.example.com/data2');
 
 ## Debouncing
 
-To debounce requests, use the `debounce` option:
+To debounce requests, use the `debounceTime` option:
 
 ```typescript
-const client = new ResilientHttpClient({
-  debounce: true,
+const client = ResilientHttpClient.getInstance({
   debounceTime: 1000, // Wait for 1 second of inactivity before sending the request
 });
 
@@ -129,7 +182,7 @@ client.fetch('https://api.example.com/search?q=test3');
 Fetch Resilient provides flexible error handling:
 
 ```typescript
-const client = new ResilientHttpClient({
+const client = ResilientHttpClient.getInstance({
   onError: (error, attempt) => {
     if (attempt === 3) {
       // Custom logic for final retry attempt
@@ -155,17 +208,6 @@ interface User {
 const user = await client.fetch<User>('https://api.example.com/user/1');
 console.log(user.name); // TypeScript knows the shape of 'user'
 ```
-
-## Zero Dependencies
-
-Fetch Resilient is designed to be lightweight and efficient. It uses the built-in `fetch` API, which is widely supported in modern browsers and Node.js environments. This means:
-
-- No external dependencies to manage
-- Smaller bundle size for your applications
-- Easier integration into various projects
-- Consistent behavior across different environments
-
-By leveraging the native `fetch` API, Fetch Resilient ensures that you get robust HTTP functionality without the overhead of additional libraries.
 
 ## Contributing
 
